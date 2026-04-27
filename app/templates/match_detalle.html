@@ -1,0 +1,177 @@
+<!-- Template que muestra el detalle de un match y su chat.
+     Recibe los siguientes parametros:
+  * "match" (dict): dict con propiedades del MatchActivo: id, estado, fecha_creacion.
+  * "participantes" (list): lista de dicts con las propiedades de cada Persona: id, nombre, foto_url.
+  * "mensajes" (list): lista de mensajes ordenados cronologicamente. Cada elemento contiene:
+    - 'msg': dict con propiedades del Mensaje: contenido, fecha_envio, tipo.
+    - 'emisor': dict con propiedades de la Persona emisora: id, nombre, foto_url.
+  * "form": formulario MensajeForm.
+ -->
+{% extends "base_with_navbar.html" %}
+
+{% block title %}FdInder - Match{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    #chat-messages {
+        height: 360px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 16px;
+        background: #f7f7f8;
+        border-radius: 14px;
+    }
+    .msg-bubble {
+        max-width: 72%;
+        padding: 10px 14px;
+        border-radius: 20px;
+        font-size: 0.93rem;
+        word-break: break-word;
+        line-height: 1.4;
+    }
+    .msg-mine {
+        background: var(--fd-grad);
+        color: white;
+        align-self: flex-end;
+        border-bottom-right-radius: 4px;
+    }
+    .msg-theirs {
+        background: white;
+        color: #222;
+        align-self: flex-start;
+        border-bottom-left-radius: 4px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    }
+    .msg-sender { font-size: 0.7rem; font-weight: 700; margin-bottom: 2px; color: #888; }
+    .msg-time   { font-size: 0.65rem; opacity: 0.6; margin-top: 3px; display: block; }
+
+    #chat-input-row {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+        align-items: center;
+    }
+    #chat-input-row input {
+        flex: 1;
+        border-radius: 50px;
+        border: 1.5px solid #e0e0e0;
+        padding: 10px 18px;
+        font-size: 0.93rem;
+        outline: none;
+        transition: border-color 0.15s;
+    }
+    #chat-input-row input:focus { border-color: var(--fd-red); }
+    #chat-input-row button {
+        width: 44px; height: 44px;
+        border-radius: 50%;
+        border: none;
+        background: var(--fd-grad);
+        color: white;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        cursor: pointer;
+        transition: opacity 0.15s;
+    }
+    #chat-input-row button:hover { opacity: 0.85; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width:600px;">
+    <a href="{{ url_for('matches') }}"
+       class="btn btn-sm btn-outline-secondary rounded-pill mb-3">
+        <i class="fa-solid fa-arrow-left me-1"></i>Matches
+    </a>
+
+    <!-- Participants strip -->
+    <div class="card border-0 shadow-sm p-3 mb-3 d-flex flex-row align-items-center gap-3 flex-wrap"
+         style="border-radius:14px;">
+        {% for persona in participantes %}
+        <div class="text-center" style="min-width:52px;">
+            <img src="{{ persona["foto_url"] or url_for('static', filename='default_avatar.svg') }}"
+                 style="width:46px;height:46px;border-radius:50%;object-fit:cover;border:2px solid #f0f0f0;">
+            <div class="small mt-1 fw-semibold" style="font-size:0.72rem;">{{ persona["nombre"] }}</div>
+            {% if persona["id"] == current_user.id %}
+            <div class="badge text-bg-secondary mt-1" style="font-size:0.55rem;">Tú</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        <div class="ms-auto text-end">
+            {% if match["estado"] == 'activo' %}
+            <span class="badge rounded-pill" style="background:var(--fd-grad); color:white;">
+                <i class="fa-solid fa-heart me-1"></i>Activo
+            </span>
+            {% else %}
+            <span class="badge text-bg-warning rounded-pill">
+                <i class="fa-solid fa-clock me-1"></i>Pendiente
+            </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Chat (only when active) -->
+    {% if match["estado"] == 'activo' %}
+    <div id="chat-messages">
+        {% if mensajes %}
+            {% for mensaje in mensajes %}
+            {% set es_mio = mensaje["emisor"]["id"] == current_user.id %}
+            <div class="d-flex flex-column {{ 'align-items-end' if es_mio else 'align-items-start' }}">
+                {% if not es_mio %}
+                <div class="msg-sender ps-2">{{ mensaje["emisor"]["nombre"] }}</div>
+                {% endif %}
+                <div class="msg-bubble {{ 'msg-mine' if es_mio else 'msg-theirs' }}">
+                    {{ mensaje["msg"]["contenido"] }}
+                    <span class="msg-time {{ 'text-white-50' if es_mio else 'text-muted' }}">
+                        {{ mensaje["msg"]["fecha_envio"] }}
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="text-center text-muted m-auto">
+                <i class="fa-solid fa-hand-wave" style="font-size:2rem; color:#ddd;"></i>
+                <p class="mt-2 small">¡Sois los primeros en escribir!</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Send form -->
+    <form method="POST" action="{{ url_for('match', id_match=match['id']) }}"
+          id="chat-form">
+        {{ form.hidden_tag() }}
+        <div id="chat-input-row">
+            <input type="text" name="contenido"
+                   placeholder="Escribe un mensaje..." maxlength="500"
+                   autocomplete="off" required>
+            <button type="submit" title="Enviar">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </div>
+    </form>
+
+    {% else %}
+    <div class="alert border-0 rounded-3" style="background:#fff8e1;">
+        <i class="fa-solid fa-clock me-1" style="color:#ffc107;"></i>
+        Este match está pendiente de confirmación.
+        <a href="{{ url_for('confirmar_match', id_match=match['id']) }}"
+           class="fw-bold text-decoration-none" style="color:var(--fd-red);">
+            Confirmar ahora
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    const chatEl = document.getElementById('chat-messages');
+    if (chatEl) chatEl.scrollTop = chatEl.scrollHeight;
+</script>
+{% endblock %}

@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120" width="100" height="120">
+  <defs>
+    <linearGradient id="flameGrad" x1="0%" y1="100%" x2="60%" y2="0%">
+      <stop offset="0%"   stop-color="#ff4e50"/>
+      <stop offset="50%"  stop-color="#fc913a"/>
+      <stop offset="100%" stop-color="#f9d423"/>
+    </linearGradient>
+    <clipPath id="flameClip">
+      <path d="M50,113 C22,95 10,72 14,50 C18,30 30,18 34,8
+               C37,19 34,30 39,36
+               C43,20 50,9 57,4
+               C60,18 54,34 60,44
+               C65,29 70,24 74,29
+               C83,45 86,65 80,82
+               C74,97 63,108 50,113 Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- Flame body -->
+  <path d="M50,113 C22,95 10,72 14,50 C18,30 30,18 34,8
+           C37,19 34,30 39,36
+           C43,20 50,9 57,4
+           C60,18 54,34 60,44
+           C65,29 70,24 74,29
+           C83,45 86,65 80,82
+           C74,97 63,108 50,113 Z"
+        fill="url(#flameGrad)"/>
+
+  <!-- Circuit board inside the flame (clipped) -->
+  <g clip-path="url(#flameClip)" stroke="white" stroke-linecap="round" opacity="0.75">
+
+    <!-- Horizontal bus lines -->
+    <line x1="22" y1="58" x2="78" y2="58" stroke-width="1.4"/>
+    <line x1="26" y1="73" x2="74" y2="73" stroke-width="1.4"/>
+    <line x1="32" y1="88" x2="68" y2="88" stroke-width="1.4"/>
+
+    <!-- Vertical connectors -->
+    <line x1="34" y1="48" x2="34" y2="73" stroke-width="1.4"/>
+    <line x1="50" y1="44" x2="50" y2="88" stroke-width="1.4"/>
+    <line x1="66" y1="48" x2="66" y2="73" stroke-width="1.4"/>
+
+    <!-- Short stubs (IC pin style) -->
+    <line x1="34" y1="73" x2="34" y2="88" stroke-width="1.4"/>
+    <line x1="66" y1="73" x2="66" y2="88" stroke-width="1.4"/>
+    <line x1="42" y1="58" x2="42" y2="73" stroke-width="1.4"/>
+    <line x1="58" y1="58" x2="58" y2="73" stroke-width="1.4"/>
+
+    <!-- Circuit nodes -->
+    <circle cx="34" cy="58" r="3" fill="white" stroke="none"/>
+    <circle cx="50" cy="58" r="3" fill="white" stroke="none"/>
+    <circle cx="66" cy="58" r="3" fill="white" stroke="none"/>
+    <circle cx="42" cy="73" r="2.5" fill="white" stroke="none"/>
+    <circle cx="58" cy="73" r="2.5" fill="white" stroke="none"/>
+    <circle cx="34" cy="88" r="2.5" fill="white" stroke="none"/>
+    <circle cx="50" cy="88" r="2.5" fill="white" stroke="none"/>
+    <circle cx="66" cy="88" r="2.5" fill="white" stroke="none"/>
+  </g>
+
+  <!-- Binary digits subtly overlaid -->
+  <g font-family="'Courier New', monospace" font-size="6.5" fill="white"
+     opacity="0.55" clip-path="url(#flameClip)">
+    <text x="20" y="52">0</text>
+    <text x="27" y="52">1</text>
+    <text x="61" y="52">1</text>
+    <text x="68" y="52">0</text>
+    <text x="38" y="68">1</text>
+    <text x="53" y="68">0</text>
+    <text x="44" y="83">0</text>
+    <text x="51" y="83">1</text>
+  </g>
+</svg>

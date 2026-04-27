@@ -1,0 +1,63 @@
+<!-- Template que muestra la pantalla de confirmacion de un match poliamoroso pendiente.
+     Recibe los siguientes parametros:
+  * "match" (dict): dict con propiedades del MatchActivo {estado:'pendiente'}: id, fecha_creacion.
+  * "participantes" (list): lista de dicts por participante. Cada uno contiene:
+        - 'persona': dict con propiedades de la Persona: id, nombre, foto_url.
+        - 'confirmado': True si ya ha confirmado su participacion (propiedad de la relacion ACEPTA).
+  * "form": formulario ConfirmarMatchForm.
+ -->
+{% extends "base_with_navbar.html" %}
+
+{% block title %}FdInder — Confirmar match{% endblock %}
+
+{% block content %}
+<div class="container py-5 text-center" style="max-width:500px;">
+    <i class="fa-solid fa-fire-flame-curved" style="font-size:3.5rem; color:var(--fd-red);"></i>
+    <h2 class="fw-bold mt-3" style="letter-spacing:-0.5px;">¡Posible Match Poliamoroso!</h2>
+    <p class="text-muted mb-4">
+        Las siguientes personas forman un ciclo de aceptaciones.
+        Todos deben confirmar para que el match sea activo.
+    </p>
+
+    <!-- Participant grid -->
+    <div class="d-flex justify-content-center flex-wrap gap-3 mb-5">
+        {% for part in participantes %}
+        <div class="text-center">
+            <img src="{{ part["persona"]["foto_url"] or url_for('static', filename='default_avatar.svg') }}"
+                 style="width:68px; height:68px; border-radius:50%; object-fit:cover;
+                        border:3px solid {{ '#21d07a' if part["confirmado"] else '#ffc107' }};">
+            <div class="fw-semibold small mt-2">{{ part["persona"]["nombre"] }}</div>
+            {% if part["confirmado"] %}
+            <span class="badge mt-1" style="background:#21d07a; color:white; font-size:0.62rem;">
+                <i class="fa-solid fa-check me-1"></i>Confirmado
+            </span>
+            {% else %}
+            <span class="badge text-bg-warning mt-1" style="font-size:0.62rem;">
+                <i class="fa-solid fa-clock me-1"></i>Pendiente
+            </span>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Action forms -->
+    <div class="d-flex gap-3 justify-content-center">
+        <form method="POST" action="{{ url_for('confirmar_match', id_match=match['id']) }}">
+            {{ form.csrf_token }}
+            <input type="hidden" name="accion" value="rechazar">
+            <button type="submit"
+                    class="btn btn-outline-danger rounded-pill px-5 py-2"
+                    onclick="return confirm('¿Seguro? Todos los participantes perderán este match.')">
+                <i class="fa-solid fa-xmark me-1"></i>Rechazar
+            </button>
+        </form>
+        <form method="POST" action="{{ url_for('confirmar_match', id_match=match['id']) }}">
+            {{ form.csrf_token }}
+            <input type="hidden" name="accion" value="aceptar">
+            <button type="submit" class="btn btn-primary rounded-pill px-5 py-2">
+                <i class="fa-solid fa-heart me-1"></i>Confirmar
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

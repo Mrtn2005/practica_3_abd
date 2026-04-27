@@ -1,0 +1,115 @@
+<!-- Template que muestra la lista de matches activos y pendientes del usuario.
+     Recibe los siguientes parametros:
+  * "matches" (list): matches del usuario. Cada elemento es un dict con las claves:
+    - 'm': dict con propiedades del MatchActivo:
+            id (str), estado ('activo'|'pendiente'), fecha_creacion (datetime).
+    - 'otros': lista de dicts de Persona participantes distintos al usuario actual,
+                cada uno con propiedades id, nombre, foto_url.
+    - 'num_mensajes': numero total de nodos Mensaje asociados al match (int).
+    - 'ultimo_mensaje': fecha_envio del mensaje mas reciente (datetime o None).
+ -->
+{% extends "base_with_navbar.html" %}
+
+{% block title %}FdInder - Mis Matches{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width:640px;">
+    <h2 class="fw-bold mb-4" style="letter-spacing:-0.5px;">Mis Matches</h2>
+
+    {% if matches %}
+        {% set activos    = matches | selectattr('m.estado', 'equalto', 'activo')    | list %}
+        {% set pendientes = matches | selectattr('m.estado', 'equalto', 'pendiente') | list %}
+
+        {% if pendientes %}
+        <h6 class="text-muted fw-semibold mb-3 text-uppercase" style="font-size:0.72rem; letter-spacing:0.08em;">
+            <i class="fa-solid fa-clock me-1"></i>Pendientes de confirmar
+        </h6>
+        <div class="d-flex flex-column gap-2 mb-4">
+            {% for item in pendientes %}
+            <div class="card border-0 shadow-sm p-3" style="border-radius:14px; border-left:3px solid #ffc107 !important;">
+                <div class="d-flex align-items-center gap-3">
+                    <!-- Stacked avatars -->
+                    <div style="position:relative; width:{{ [item["otros"]|length, 3]|min * 30 + 18 }}px; height:48px; flex-shrink:0;">
+                        {% for otro in item["otros"][:3] %}
+                        <img src="{{ otro["foto_url"] or url_for('static', filename='default_avatar.svg') }}"
+                             style="position:absolute; left:{{ loop.index0 * 20 }}px;
+                                    width:44px; height:44px; border-radius:50%; object-fit:cover;
+                                    border:2px solid white;">
+                        {% endfor %}
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold">
+                            {% for otro in item["otros"] %}{{ otro["nombre"] }}{% if not loop.last %}, {% endif %}{% endfor %}
+                        </div>
+                        <div class="text-muted small">
+                            <i class="fa-solid fa-users me-1"></i>
+                            Match poliamoroso · {{ item["otros"] | length + 1 }} personas
+                        </div>
+                    </div>
+                    <a href="{{ url_for('confirmar_match', id_match=item["m"]["id"]) }}"
+                       class="btn btn-sm btn-warning rounded-pill px-3">
+                        Confirmar
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if activos %}
+        <h6 class="text-muted fw-semibold mb-3 text-uppercase" style="font-size:0.72rem; letter-spacing:0.08em;">
+            <i class="fa-solid fa-comment-dots me-1"></i>Activos
+        </h6>
+        <div class="d-flex flex-column gap-2">
+            {% for item in activos %}
+            <a href="{{ url_for('match', id_match=item["m"]["id"]) }}"
+               class="card border-0 shadow-sm p-3 text-decoration-none text-dark"
+               style="border-radius:14px; transition:transform 0.12s;"
+               onmouseover="this.style.transform='translateY(-2px)'"
+               onmouseout="this.style.transform=''">
+                <div class="d-flex align-items-center gap-3">
+                    <!-- Stacked avatars -->
+                    <div style="position:relative; width:{{ [item["otros"]|length, 3]|min * 30 + 18 }}px; height:52px; flex-shrink:0;">
+                        {% for otro in item["otros"][:3] %}
+                        <img src="{{ otro["foto_url"] or url_for('static', filename='default_avatar.svg') }}"
+                             style="position:absolute; left:{{ loop.index0 * 22 }}px;
+                                    width:48px; height:48px; border-radius:50%; object-fit:cover;
+                                    border:2px solid white;">
+                        {% endfor %}
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold">
+                            {% for otro in item["otros"] %}{{ otro["nombre"] }}{% if not loop.last %}, {% endif %}{% endfor %}
+                        </div>
+                        <div class="text-muted small">
+                            <i class="fa-regular fa-comment me-1"></i>
+                            {{ item["num_mensajes"] }} mensaje{{ 's' if item["num_mensajes"] != 1 else '' }}
+                            {% if item["ultimo_mensaje"] %}&nbsp;·&nbsp;{{ item["ultimo_mensaje"] }}{% endif %}
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-muted" style="font-size:0.8rem;"></i>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if not activos and not pendientes %}
+        <div class="text-center py-5 text-muted">
+            <i class="fa-solid fa-fire-flame-curved" style="font-size:3rem; color:#eee;"></i>
+            <p class="mt-3">Todavía no tienes matches activos</p>
+        </div>
+        {% endif %}
+
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fa-solid fa-fire-flame-curved" style="font-size:3.5rem; color:#eee;"></i>
+        <h5 class="mt-3 fw-semibold text-muted">Aún no tienes matches</h5>
+        <p class="text-muted small">¡Empieza a explorar!</p>
+        <a href="{{ url_for('explorar') }}" class="btn btn-primary rounded-pill mt-1 px-4">
+            <i class="fa-solid fa-fire-flame-curved me-1"></i>Explorar
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

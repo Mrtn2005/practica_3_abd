@@ -1,0 +1,35 @@
+{% from "bootstrap5/utils.html" import render_messages %}
+<!doctype html>
+<html lang="es">
+    <head>
+        {% block head %}
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
+
+        {% block styles %}
+            {{ bootstrap.load_css() }}
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+        {% endblock %}
+
+        <title>{% block title %}Fdinder{% endblock %}</title>
+        <link rel="icon" href="/static/fdinder.svg" type="image/svg+xml">
+        {% endblock %}
+    </head>
+    <body>
+
+        {% block navbar %}{% endblock %}
+
+        {% block content_with_flash %}
+            <div class="container mx-auto mt-3 mb-3">
+                {{ render_messages() }}
+            </div>
+            {% block content %}{% endblock %}
+        {% endblock %}
+
+        {% block scripts %}
+            {{ bootstrap.load_js() }}
+        {% endblock %}
+
+    </body>
+</html>

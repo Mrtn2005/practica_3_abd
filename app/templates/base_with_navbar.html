@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block styles %}
+{{ super() }}
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --fd-red:   #FE3C72;
+        --fd-orange: #FF6036;
+        --fd-grad:  linear-gradient(to right, #FE3C72, #FF6036);
+    }
+    body {
+        background: #fff;
+        font-family: 'DM Sans', system-ui, sans-serif;
+        min-height: 100vh;
+        padding-bottom: 72px;
+    }
+    /* ── Top bar ── */
+    .top-bar {
+        position: sticky;
+        top: 0;
+        z-index: 200;
+        background: #fff;
+        border-bottom: 1px solid #f0f0f0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        height: 56px;
+    }
+    .top-bar .brand {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-weight: 700;
+        font-size: 1.35rem;
+        text-decoration: none;
+        background: var(--fd-grad);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .top-bar .brand img { height: 30px; }
+    .top-bar .top-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .top-bar .username {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #aaa;
+    }
+    .top-bar .btn-logout {
+        background: none;
+        border: none;
+        color: #bbb;
+        font-size: 1.05rem;
+        padding: 0;
+        cursor: pointer;
+        transition: color 0.15s;
+    }
+    .top-bar .btn-logout:hover { color: var(--fd-red); }
+    /* ── Bottom navigation ── */
+    .bottom-nav {
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        z-index: 200;
+        background: #fff;
+        border-top: 1px solid #f0f0f0;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        height: 62px;
+    }
+    .bottom-nav a {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        text-decoration: none;
+        color: #ccc;
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        transition: color 0.15s;
+        padding: 8px 20px;
+    }
+    .bottom-nav a i { font-size: 1.3rem; }
+    .bottom-nav a.active { color: var(--fd-red); }
+    .bottom-nav a:hover  { color: var(--fd-red); }
+    /* ── Global btn overrides ── */
+    .btn-primary, .btn-primary:focus {
+        background: var(--fd-grad) !important;
+        border: none !important;
+        box-shadow: 0 4px 16px rgba(254,60,114,0.3) !important;
+    }
+    .btn-primary:hover {
+        background: linear-gradient(to right, #e0345f, #e04f25) !important;
+    }
+    /* ── Flash messages ── */
+    .flash-wrapper {
+        max-width: 560px;
+        margin: 12px auto 0;
+        padding: 0 16px;
+    }
+</style>
+{% endblock %}
+
+{% block navbar %}
+<header class="top-bar">
+    <a class="brand" href="{{ url_for('explorar') if current_user.is_authenticated else url_for('log_in') }}">
+        <img src="{{ url_for('static', filename='fdinder.svg') }}" alt="Fdinder">
+        FdInder
+    </a>
+    {% if current_user.is_authenticated %}
+    <div class="top-right">
+        <span class="username">{{ current_user.nombre }}</span>
+        <a href="{{ url_for('log_out') }}" class="btn-logout" title="Cerrar sesión">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+        </a>
+    </div>
+    {% else %}
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('log_in') }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">Entrar</a>
+        <a href="{{ url_for('sign_up') }}" class="btn btn-sm btn-primary rounded-pill px-3">Registro</a>
+    </div>
+    {% endif %}
+</header>
+
+{% if current_user.is_authenticated %}
+<nav class="bottom-nav">
+    <a href="{{ url_for('explorar') }}"
+       class="{{ 'active' if request.endpoint == 'explorar' else '' }}">
+        <i class="fa-solid fa-fire-flame-curved"></i>
+        Explorar
+    </a>
+    <a href="{{ url_for('matches') }}"
+       class="{{ 'active' if request.endpoint in ('matches', 'match', 'confirmar_match') else '' }}">
+        <i class="fa-solid fa-comment-dots"></i>
+        Matches
+    </a>
+</nav>
+{% endif %}
+{% endblock %}

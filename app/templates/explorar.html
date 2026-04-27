@@ -1,0 +1,223 @@
+<!-- Template que muestra la baraja de tarjetas para explorar candidatos.
+     Recibe los siguientes parametros:
+  * "candidatos" (list): candidatos compatibles aplanados para el SwipeDeck de JS.
+                         Cada elemento es un dict con las claves:
+    - 'id': UUID del nodo Persona.
+    - 'nombre': nombre para mostrar.
+    - 'foto_url': URL de la foto de perfil.
+    - 'edad': edad en anyos (int).
+    - 'personas_comunes': numero de personas comunes.
+ -->
+{% extends "base_with_navbar.html" %}
+
+{% block title %}FdInder - Explorar{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    /* ── Card deck ── */
+    #deck-wrapper {
+        position: relative;
+        width: min(360px, 92vw);
+        height: min(520px, 68vh);
+        margin: 0 auto;
+    }
+    .swipe-card {
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+        background: #f0f0f0;
+        cursor: grab;
+        user-select: none;
+        -webkit-user-select: none;
+        will-change: transform;
+    }
+    #swipe-card-next {
+        transform: scale(0.94) translateY(12px);
+        z-index: 1;
+        filter: brightness(0.88);
+    }
+    #swipe-card { z-index: 2; }
+
+    /* Photo fills the full card */
+    .swipe-card img.card-foto {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        pointer-events: none;
+    }
+    /* Info overlay at the bottom of the photo */
+    .card-info-overlay {
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        padding: 60px 18px 18px;
+        background: linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.22) 60%, transparent 100%);
+        color: white;
+    }
+    .card-name-row {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+    }
+    .card-name { font-size: 1.5rem; font-weight: 700; margin: 0; }
+    .card-age  { font-size: 1.1rem; font-weight: 400; opacity: 0.9; }
+    .card-meta { font-size: 0.82rem; opacity: 0.75; margin-top: 4px; }
+    /* Swipe overlays */
+    .overlay {
+        position: absolute;
+        top: 24px;
+        font-size: 1.4rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        border: 3px solid;
+        border-radius: 8px;
+        padding: 4px 14px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.1s;
+        z-index: 10;
+        text-transform: uppercase;
+    }
+    #overlay-like {
+        left: 18px;
+        color: #21d07a;
+        border-color: #21d07a;
+        transform: rotate(-15deg);
+    }
+    #overlay-nope {
+        right: 18px;
+        color: #FF6036;
+        border-color: #FF6036;
+        transform: rotate(15deg);
+    }
+
+    /* ── Action buttons ── */
+    .action-buttons {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 28px;
+        margin-top: 22px;
+    }
+    .action-buttons button {
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.15s, box-shadow 0.15s;
+        cursor: pointer;
+    }
+    .action-buttons button:hover { transform: scale(1.1); }
+
+    #btn-nope {
+        width: 58px; height: 58px;
+        background: white;
+        border: 2px solid #FF6036;
+        color: #FF6036;
+        font-size: 1.4rem;
+        box-shadow: 0 4px 18px rgba(255,96,54,0.25);
+    }
+    #btn-like {
+        width: 72px; height: 72px;
+        background: var(--fd-grad);
+        border: none;
+        color: white;
+        font-size: 1.8rem;
+        box-shadow: 0 4px 20px rgba(254,60,114,0.4);
+    }
+    .keyboard-hint { font-size: 0.75rem; color: #bbb; margin-top: 10px; }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-3 text-center">
+
+    {% if candidatos %}
+
+    <!-- Card deck -->
+    <div id="deck-wrapper">
+        <!-- Background (next) card -->
+        <div class="swipe-card" id="swipe-card-next">
+            <img data-field="foto" class="card-foto" src="/static/default_avatar.svg" alt="">
+            <div class="card-info-overlay">
+                <div class="card-name-row">
+                    <p class="card-name" data-field="nombre">—</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Foreground (current) card -->
+        <div class="swipe-card" id="swipe-card">
+            <div class="overlay" id="overlay-like">
+                <i class="fa-solid fa-heart me-1"></i>LIKE
+            </div>
+            <div class="overlay" id="overlay-nope">
+                <i class="fa-solid fa-xmark me-1"></i>NOPE
+            </div>
+
+            <img data-field="foto" class="card-foto" src="/static/default_avatar.svg" alt="">
+
+            <div class="card-info-overlay text-start">
+                <div class="card-name-row">
+                    <p class="card-name" data-field="nombre"></p>
+                    <span class="card-age" data-field="edad"></span>
+                </div>
+                <div class="card-meta">
+                    <span data-field="personas"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="action-buttons">
+        <button id="btn-nope" title="Pasar (←)" aria-label="Rechazar">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <button id="btn-like" title="Me gusta (→)" aria-label="Aceptar">
+            <i class="fa-solid fa-heart"></i>
+        </button>
+    </div>
+
+    <p class="keyboard-hint">
+        <i class="fa-solid fa-arrow-left"></i> Pasar &nbsp;|&nbsp;
+        Me gusta <i class="fa-solid fa-arrow-right"></i>
+    </p>
+
+    {% else %}
+    <!-- Empty state (static, shown when server returns no candidates) -->
+    <div id="empty-state" class="text-center py-5">
+        <i class="fa-solid fa-fire-flame-curved" style="font-size:4rem; color:#eee;"></i>
+        <h5 class="mt-3 text-muted">No hay más candidatos por aquí</h5>
+        <p class="text-muted small">Vuelve más tarde o actualiza tu perfil</p>
+    </div>
+    {% endif %}
+
+    <!-- Hidden empty state shown by JS when deck runs out mid-session -->
+    {% if candidatos %}
+    <div id="empty-state" class="text-center py-5" style="display:none">
+        <i class="fa-solid fa-fire-flame-curved" style="font-size:4rem; color:#eee;"></i>
+        <h5 class="mt-3 text-muted">¡Has visto todos los candidatos!</h5>
+        <a href="{{ url_for('explorar') }}"
+           class="btn btn-primary rounded-pill mt-3 px-4">
+            <i class="fa-solid fa-rotate-right me-1"></i>Ver más personas
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>const CANDIDATES = {{ candidatos | tojson }};</script>
+<script src="{{ url_for('static', filename='swipe.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => { new SwipeDeck(CANDIDATES); });
+</script>
+{% endblock %}
