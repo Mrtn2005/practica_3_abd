@@ -201,7 +201,14 @@ def rechazar(id_persona: str):
 
     Como resultado, la funcion devuelve una respuesta 204 con make_response('', 204)
     """
-    abort(404)
+    cypher = """
+            MATCH (yo:Persona {id: $mi_id})
+            MATCH (candidato:Persona {id: $su_id})
+            MERGE (yo)-[:HA_RECHAZADO]->(candidato)
+            """
+    query(cypher, mi_id=current_user.id, su_id=id_persona)
+    return make_response('', 204)
+
 
 
 @app.route('/matches')
