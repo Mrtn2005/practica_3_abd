@@ -149,6 +149,7 @@ def sign_up():
         edad_min = formulario.busca_edad_min.data
         edad_max = formulario.busca_edad_max.data
 
+        rango_edades = list(range(edad_min, edad_max + 1)) #lista de la edadmin a la max inculidos
         cypher = """
         CREATE (p:Persona {id: $id_nuevo, nombre: $nombre, email: $email, password_hash: $password. foto_url: $foto_url})
         
@@ -160,12 +161,17 @@ def sign_up():
         MERGE (e2:Edad {valor: edad_buscada})
         CREATE (p)-[:BUSCA_EDAD]->(e2)
         """
+        records, _, _ = query(cypher, id_nuevo=nuevo_id, nombre=nombre, email=email, password_hash=password,
+                              foto_url=foto_url, edad = edad, rango_edades=rango_edades)
+
+        if records:
+            nodo_persona = records[0]["p"]
+            usuario = Persona.from_node(nodo_persona)
+            login_user(usuario)
+            return redirect(url_for('explorar'))
 
 
-
-
-
-
+    return render_template('sign_up.html', form=formulario)
 
 @app.route('/log_out')
 @login_required
@@ -203,7 +209,40 @@ def explorar():
     Como resultado, se renderiza el template "explorar.html". Si el campo 'foto_url' es None, entonces
     se debe asignar el valor DEFAULT_FOTO_URL.
     """
-    abort(404)
+    cypher = """
+    MATCH (yo:Persona {id: $mi_id})
+    
+    MATCH (yo)-[:BUSCA_EDAD]->(:Edad)<-[:TIENE_EDAD]-(candidato:Persona)
+    MATCH (yo)-[:TIENE_EDAD]->(:Edad)<-[:BUSCA_EDAD]-(candidato)
+    WHERE yo <> candidato
+    
+    AND NOT (yo)-[:QUIERE_MATCH|HA_RECHAZADO]->(candidato)
+    AND NOT (yo)-[:ACEPTA]->(:MatchActivo)<-[:ACEPTA]-(candidato)
+    
+    OPTIONAL MATCH (yo)-[:QUIERE_MATCH*1..4]-(comun:Persona)-[:QUIERE_MATCH*1..4]-(candidato)
+    WHERE comun <> yo AND comun <> candidato
+    WITH candidato, count(DISTINCT comun) AS personas_comunes
+    ORDER BY personas_comunes DESC
+    LIMIT 100
+
+    RETURN candidato
+    """
+
+    records, _, _ = query(cypher, mi_id = current_user.id)
+
+    lista_candidatos = []
+
+    for record in records:
+        nodo = record['candidato']
+        candidato = Persona.from_node(nodo)
+
+        if not candidato.foto_url:
+            candidato.foto_url = DEFAULT_FOTO_URL
+
+        lista_candidatos.append(candidato)
+
+
+    return render_template("explorar.html", candidatos=lista_candidatos)
 
 
 @app.route('/aceptar/<id_persona>', methods=['POST'])
