@@ -268,7 +268,24 @@ def aceptar(id_persona: str):
 
       Como resultado, la funcion devuelve una respuesta 204 con make_response('', 204)
     """
-    abort(404)
+    #1.
+    cypher_existe = "MATCH (c:Persona {id: $id}) RETURN c"
+    records_existe, _, _ = query(cypher_existe, mi_id = current_user.id)
+    if not records_existe:
+        abort(404)
+
+    #2
+    cypher_swipe = """
+    MATCH (yo:Persona {id: $mi_id}), (c:Persona {id: $id_candidato})
+    MERGE (yo)-[:QUIERE_MATCH]-> (c)
+    """
+    query(cypher_swipe, mi_id=current_user.id, id_candidato=id_persona)
+    #Miro los ciclosç
+
+
+
+
+
 
 
 @app.route('/rechazar/<id_persona>', methods=['POST'])
