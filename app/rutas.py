@@ -122,7 +122,49 @@ def sign_up():
 
       Finalmente hace login y redirige a explorar.
     """
-    abort(404)
+    formulario = SignupForm()
+
+    if formulario.validate_on_submit():
+        email = formulario.email.data
+
+        cypher = "MATCH (p:Persona {email: $email}) RETURN p"
+        records, _, _ = query(cypher, email=email)
+
+        if records:
+            flash("Ya existe un usuario con este email")
+            return render_template('sign_up.html', form=formulario)
+
+        nuevo_id = str(uuid.uuid4())
+        archivo = formulario.data["foto"]
+        if archivo and archivo.filename:
+            ext = archivo.filename.rsplit('.', 1)[-1].lower()
+            archivo.save(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'profiles', f'{nuevo_id}.{ext}'))
+            foto_url = f'/profiles/{nuevo_id}.{ext}'
+        else:
+            foto_url = DEFAULT_FOTO_URL
+
+        nombre = formulario.nombre.data
+        password = formulario.password.data
+        edad = formulario.edad.data
+        edad_min = formulario.busca_edad_min.data
+        edad_max = formulario.busca_edad_max.data
+
+        cypher = """
+        CREATE (p:Persona {id: $id_nuevo, nombre: $nombre, email: $email, password_hash: $password. foto_url: $foto_url})
+        
+        MERGE (e1:Edad {valor: $edad})
+        CREATE (p)-[:TIENE_EDAD]->(e1)
+        
+        WITH p
+        UNWIND $rango_edades AS edad_buscada
+        MERGE (e2:Edad {valor: edad_buscada})
+        CREATE (p)-[:BUSCA_EDAD]->(e2)
+        """
+
+
+
+
+
 
 
 @app.route('/log_out')
