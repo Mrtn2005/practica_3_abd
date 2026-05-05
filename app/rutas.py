@@ -299,14 +299,23 @@ def aceptar(id_persona: str):
             estado_match = "pendiente"
             confirmado = False
 
-
-
-
-
-
-
-
-
+        cypher_match = """
+        MATCH (p:Persona) WHERE p.id IN $ids
+        
+        WITH collect(p) AS grupo
+        CREATE (m:MatchActivo {estado: $estado})
+        
+        WITH grupo, m
+        UNWIND grupo AS persona
+        CREATE (persona)-[:ACEPTA {confirmado: $conf}]->(m)
+        
+        WITH grupo
+        MATCH (p1:Persona)-[r:QUIERE_MATCH]->(p2:Persona)
+        WHERE p1.id IN $ids AND p2.id IN $ids
+        DELETE r
+        """
+        query(cypher_match, ids=ids_ciclo, estado=estado_match, conf=confirmado)
+    return make_response("", 204)
 
 @app.route('/rechazar/<id_persona>', methods=['POST'])
 @login_required
