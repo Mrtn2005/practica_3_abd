@@ -270,7 +270,7 @@ def aceptar(id_persona: str):
     """
     #1.
     cypher_existe = "MATCH (c:Persona {id: $id}) RETURN c"
-    records_existe, _, _ = query(cypher_existe, mi_id = current_user.id)
+    records_existe, _, _ = query(cypher_existe, id = current_user.id)
     if not records_existe:
         abort(404)
 
@@ -280,7 +280,27 @@ def aceptar(id_persona: str):
     MERGE (yo)-[:QUIERE_MATCH]-> (c)
     """
     query(cypher_swipe, mi_id=current_user.id, id_candidato=id_persona)
-    #Miro los ciclosç
+    #Miro los ciclos
+    cypher_ciclo = """
+    MATCH path = shortestPath((c:Persona {id: $id_candidato})-[:QUIERE_MATCH*1..10]->(yo:Persona {id: $mi_id}))
+    RETURN nodes(path) AS nodos_ciclo, length(path) AS longitud_ciclo
+    """
+    records_ciclo, _, _ = query(cypher_ciclo, id_candidato = id_persona, mi_id = current_user.id)
+
+    if records_ciclo:
+        longitud = records_ciclo[0]["longitud_ciclo"]
+        nodos_ciclo = records_ciclo[0]["nodos_ciclo"]
+
+        ids_ciclo = [nodo["id"] for nodo in nodos_ciclo]
+        if longitud == 1:
+            estado_match = "activo"
+            confirmado = True
+        else:
+            estado_match = "pendiente"
+            confirmado = False
+
+
+
 
 
 
