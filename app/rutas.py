@@ -351,6 +351,13 @@ def matches():
 
     Como resultado, se debe renderizar el template "matches.html".
     """
+
+    cypher = """
+    MATCH (yo:Persona {id: $mi_id})-[:ACEPTA]->(m:MatchActivo)<-[:ACEPTA]-(otro:Persona)
+    
+
+    """
+
     abort(404)
 
 
@@ -371,6 +378,7 @@ def match(id_match: str):
     * En caso contrario, se renderiza el template "match_detalle.html". Para ello, hay que cargar los mensajes
       cronologicamente de forma ascendente (del mas antiguo al mas nuevo).
     """
+
     abort(404)
 
 
